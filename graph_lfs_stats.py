@@ -11,7 +11,7 @@ and creates a json version:
 metic: number
 '''
 
-import sys,json,argparse,logging
+import sys,json,argparse,logging,facter,time
 
 class json_stat:
 
@@ -19,6 +19,8 @@ class json_stat:
     self.argparser = self.argparser()
     self.dictify = self.dictify()    
     self.push_to_graphite = self.push_to_graphite()
+    self.get_facts = self.get_facts()
+    self.get_epoch_time = get_epoch_time()
 
   def dictify(self):
     try:
@@ -37,12 +39,8 @@ class json_stat:
            data[words[0]] = words[-1]
       else:
            data[words[0]] = words[1]
-      
-    
     f.close()
     self.jdata = json.JSONEncoder().encode(data)
-    #json.JSONEncoder().iterencode(data)
-    #self.data
 
   def argparser(self):
       #Setting up parsing options for inputting data
@@ -70,7 +68,16 @@ class json_stat:
   def push_to_graphite(self):
     print self.jdata
 
+  def get_facts(self):
+    f = facter.Facter() 
+    self.datacenter = f["datacenter"].lower()
+    self.hostname = f["hostname"].lower()
+    
+  def get_epoch_time():
+    self.epoch_time = time.time()
+    print self.epoch_time
+    
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   logger = logging.getLogger('/var/log/graphite/graph_lfs_stats.log')
-  json_stat() 
+  json_stat()
