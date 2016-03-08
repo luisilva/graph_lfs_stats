@@ -11,7 +11,7 @@ and creates a json version:
 metic: number
 '''
 
-import sys,json
+import sys,json,argparse,logging
 
 class json_stat:
 
@@ -44,10 +44,28 @@ class json_stat:
     #json.JSONEncoder().iterencode(data)
     #self.data
 
-  def get_file_path(self):
-    for x in range(1, len(sys.argv)):
-      self.filename = sys.argv[x]
-      #dictify(filename)
+  def argparser(self):
+      #Setting up parsing options for inputting data
+      parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
+      parser.add_argument("-m", "--mdt", required=False,default=True help="parsing md_stat on and MDS host")
+      parser.add_argument("-o", "--ost", required=False, help="parsing md_stat on and MDS host")
+      parser.add_argument("-f", "--file-location", required=False, default="/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats",help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
+      parser.add_argument("-v", "--verbose", action='store_true',required=False, default=False,help="verbose output")
+
+      args = parser.parse_args()
+
+      self.filename = args.file_location
+      self.verbose = args.verbose
+      self.mdt = args.mdt
+      self.ost = args.ost
+
+      debug = args.verbose
+      log_level = logging.INFO
+      if debug == True:
+        log_level = logging.DEBUG
+      logging.basicConfig(filename="/var/log/graphite/graph_lfs_stats.log", level=log_level, format=LOG_FORMAT)
+
+      logger.debug(" ".join(sys.argv))
 
   def push_to_graphite(self):
     print self.jdata
