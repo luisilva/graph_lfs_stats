@@ -11,7 +11,7 @@ and creates a json version:
 metic: number
 '''
 
-import sys,json,argparse,logging,facter,time
+import sys,os,json,argparse,logging,time
 
 class json_stat:
 
@@ -66,16 +66,32 @@ class json_stat:
       logger.debug(" ".join(sys.argv))
 
   def push_to_graphite(self):
-    print self.jdata
+    #print self.jdata
 
   def get_facts(self):
-    f = facter.Facter() 
-    self.datacenter = f["datacenter"].lower()
-    self.hostname = f["hostname"].lower()
+    facts = {}
+    for fact in os.popen("facter -p").readlines():
+      try:
+        n, v = fact.split(" => ")
+        print "%s %s" %(n,v)
+        facts[ n ] = v.rstrip()
+      except:
+	print "hit the baddy: %s" %(facts) 
+    
+    for x in facts:
+      print (x)
+    for y in facts[x]:
+        print (y,':',facts[x][y])
+    
+    print facts['dataceter']
+    # 
+    #f = facter.Facter() 
+    #self.datacenter = f["datacenter"].lower()
+    #self.hostname = f["hostname"].lower()
     
   def get_epoch_time():
     self.epoch_time = time.time()
-    print self.epoch_time
+    #print self.epoch_time
     
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
