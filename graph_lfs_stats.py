@@ -11,7 +11,7 @@ and creates a json version:
 metic: number
 '''
 
-import sys,os,json,argparse,logging,time,shlex,socket
+import sys,os,json,argparse,logging,time,socket
 from subprocess import Popen, PIPE
 
 class json_stat:
