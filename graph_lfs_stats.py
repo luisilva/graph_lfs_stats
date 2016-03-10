@@ -136,8 +136,8 @@ class json_stat:
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   logger = logging.getLogger('/var/log/graphite/graph_lfs_stats.log')
-  facter_json_file_location = '/root/graphite/facts.json'
-  facter_json_location = '/root/graphite'
+  facter_json_file_location = '/var/graphite/facts/facts.json'
+  facter_json_location = '/var/graphite/facts'
   graphite_server = 'graph.rc.fas.harvard.edu'
   graphite_port = 2003
   graphite_service_name = 'md_stat'
