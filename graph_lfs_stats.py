@@ -11,19 +11,21 @@ and creates a json version:
 metic: number
 '''
 
-import sys,os,json,argparse,logging,time
+import sys,os,json,argparse,logging,time,shlex,socket
 from subprocess import Popen, PIPE
 
 class json_stat:
 
   def __init__(self):
     self.argparser = self.argparser()
-    self.dictify = self.dictify()    
+    if not os.path.isfile(facter_json_file_location):
+      self.get_facts = self.get_facts() 
+    self.dictify_facts = self.dictify_facts()
+    self.get_epoch = self.get_epoch()
+    self.dictify_mdstat = self.dictify_mdstat()    
     self.push_to_graphite = self.push_to_graphite()
-    self.get_facts = self.get_facts()
-    #self.get_epoch_time = get_epoch_time()
 
-  def dictify(self):
+  def dictify_mdstat(self):
     try:
         f = open(self.filename, 'r')
     except:
@@ -67,13 +69,44 @@ class json_stat:
       logger.debug(" ".join(sys.argv))
 
   def push_to_graphite(self):
-    print self.jdata
-
-  def get_epoch_time(self):
-    self.epoch_time = time.time().total_seconds()
-    print self.epoch_time
+    #print self.jdata
+    metrics = json.loads(self.jdata)
+    content = []
+    for metric, value in metrics.iteritems():
+      metric = str(metric) 
+      if metric == 'source':
+        continue
+      value = float(value)
+      #print metric, value 
+      '''echo "llstat.holyoke.bulfs01mds.open 301 `date +%s`" |nc graph.rc.fas.harvard.edu 2003'''
+      #bulding the graphite url
+      dots = "."
+      params = (graphite_service_name, self.datacenter, self.hostname, metric)
+      gurl = dots.join(params)
+      data_str = '%s %s %s' %(gurl, value, self.epoch_time)
+      content.append(data_str)
+    
+    content = "\n ".join(content)
+    print "opening Connection."
+    print content
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((graphite_server, graphite_port))
+    s.sendall(content)
+    s.shutdown(socket.SHUT_WR)
+    while 1:
+      data = s.recv(1024)
+      if data == "":
+          break
+      print "Received:", repr(data)
+    print "Connection closed."
+    s.close()
+    
+  def get_epoch(self):
+    self.epoch_time = int(time.time())
+    #print self.epoch_time
     
   def get_facts(self):
+    # running facter -p with json output to capture it into a json file to pull into a dictionary later. 
     facts = {}
     facts = Popen(['facter', '-p', '--json'], stdout=PIPE, stderr=PIPE)
     facts_out,facts_err = facts.communicate()
@@ -82,27 +115,30 @@ class json_stat:
        print "nada!"
     elif not facts_out:
        print "Um not getting any facts"
-    elif facts_out.rstrip():
-       print "Error: "+ facts_err
+    elif facts_err.rstrip():
+       print "Error:<<%s>>" %facts_err
     
     mkdir = Popen(['mkdir', '-p', facter_json_location], stdout=PIPE, stderr=PIPE)
     mkdir_out,mkdir_err = mkdir.communicate()
 
     with open(facter_json_file_location , 'w') as outfile:
       json.dump(facts_out, outfile)
-     #try:
-     # fact = os.popen("facter -p --json")
-     #  print fact 
-     #  facts = json.loads(fact)
-     #except:
-     #  print "hit a baddy" 
-     #self.datacenter = facts['datacenter']
-     #self.hostname = facts['hostname']
-     #print facts
-    
+
+  def dictify_facts(self):
+    with open(facter_json_file_location) as facter_file:    
+      facter_facts = json.load(facter_file)
+      json_data = json.loads(facter_facts)
+      self.datacenter = json_data['datacenter']
+      self.hostname = json_data['hostname']
+      #print self.datacenter
+      #print self.hostname
+
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   logger = logging.getLogger('/var/log/graphite/graph_lfs_stats.log')
   facter_json_file_location = '/root/graphite/facts.json'
   facter_json_location = '/root/graphite'
+  graphite_server = 'graph.rc.fas.harvard.edu'
+  graphite_port = 2003
+  graphite_service_name = 'md_stat'
   json_stat()
