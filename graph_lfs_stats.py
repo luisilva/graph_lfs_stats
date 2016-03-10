@@ -12,6 +12,7 @@ metic: number
 '''
 
 import sys,os,json,argparse,logging,time
+from subprocess import Popen, PIPE
 
 class json_stat:
 
@@ -20,7 +21,7 @@ class json_stat:
     self.dictify = self.dictify()    
     self.push_to_graphite = self.push_to_graphite()
     self.get_facts = self.get_facts()
-    self.get_epoch_time = get_epoch_time()
+    #self.get_epoch_time = get_epoch_time()
 
   def dictify(self):
     try:
@@ -66,34 +67,42 @@ class json_stat:
       logger.debug(" ".join(sys.argv))
 
   def push_to_graphite(self):
-    #print self.jdata
+    print self.jdata
 
+  def get_epoch_time(self):
+    self.epoch_time = time.time().total_seconds()
+    print self.epoch_time
+    
   def get_facts(self):
     facts = {}
-    for fact in os.popen("facter -p").readlines():
-      try:
-        n, v = fact.split(" => ")
-        print "%s %s" %(n,v)
-        facts[ n ] = v.rstrip()
-      except:
-	print "hit the baddy: %s" %(facts) 
+    facts = Popen(['facter', '-p', '--json'], stdout=PIPE, stderr=PIPE)
+    facts_out,facts_err = facts.communicate()
+
+    if not facts_out and not facts_err:
+       print "nada!"
+    elif not facts_out:
+       print "Um not getting any facts"
+    elif facts_out.rstrip():
+       print "Error: "+ facts_err
     
-    for x in facts:
-      print (x)
-    for y in facts[x]:
-        print (y,':',facts[x][y])
-    
-    print facts['dataceter']
-    # 
-    #f = facter.Facter() 
-    #self.datacenter = f["datacenter"].lower()
-    #self.hostname = f["hostname"].lower()
-    
-  def get_epoch_time():
-    self.epoch_time = time.time()
-    #print self.epoch_time
+    mkdir = Popen(['mkdir', '-p', facter_json_location], stdout=PIPE, stderr=PIPE)
+    mkdir_out,mkdir_err = mkdir.communicate()
+
+    with open(facter_json_file_location , 'w') as outfile:
+      json.dump(facts_out, outfile)
+     #try:
+     # fact = os.popen("facter -p --json")
+     #  print fact 
+     #  facts = json.loads(fact)
+     #except:
+     #  print "hit a baddy" 
+     #self.datacenter = facts['datacenter']
+     #self.hostname = facts['hostname']
+     #print facts
     
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   logger = logging.getLogger('/var/log/graphite/graph_lfs_stats.log')
+  facter_json_file_location = '/root/graphite/facts.json'
+  facter_json_location = '/root/graphite'
   json_stat()
