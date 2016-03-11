@@ -20,7 +20,7 @@ class json_stat:
     self.argparser = self.argparser()
     if not os.path.isfile(facter_json_file_location):
       self.get_facts = self.get_facts()
-    if self.datacenter or self.hostname == None:
+    if self.datacenter == None or self.hostname == None:
       self.dictify_facts = self.dictify_facts()
     self.get_epoch = self.get_epoch()
     self.dictify_mdstat = self.dictify_mdstat()    
@@ -28,8 +28,8 @@ class json_stat:
     self.push_to_graphite = self.push_to_graphite()
 
   def dictify_mdstat(self):
-    sample=1
-    while sample <=2:
+    sample = 1
+    while sample <= 2:
       try:
         f = open(self.filename, 'r')
       except:
@@ -47,9 +47,9 @@ class json_stat:
         else:
           data[words[0]] = words[1]
       f.close()
-      if sample = 1: 
+      if sample == 1: 
         self.jdata1 = json.JSONEncoder().encode(data)
-      elif sample = 2:
+      elif sample == 2:
         self.jdata2 = json.JSONEncoder().encode(data)
       sample += 1
       time.sleep(self.interval)
@@ -59,12 +59,21 @@ class json_stat:
     print self.jdata1
 
     self.delta_data={}
-    for latest_metric, latest_value in self.jdata2.iteritems():
-      for previous_metric, previous_value in self.jdata1.iteritems():
-      delta_metric = str(previous_metric)
-      delta_value = latest_value - previous_value
+    jdata2 = json.loads(self.jdata2)
+    jdata1 = json.loads(self.jdata1)
+    for latest_metric, latest_value in jdata2.iteritems():
+      #for previous_metric, previous_value in self.jdata1.iteritems():
+      delta_metric = str(latest_metric)
+      #print delta_metric
+      if delta_metric == 'source' or delta_metric == 'snapshot_time':
+        continue
+      previous_value = jdata1[delta_metric]
+      #print previous_value
+      delta_value = int(latest_value) - int(previous_value)
+      #print delta_value
       self.delta_data[delta_metric] = delta_value
-  
+      #print self.delta_data
+     
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
@@ -72,8 +81,8 @@ class json_stat:
       parser.add_argument("-o", "--ost", required=False, help="parsing stats on and OSS host")
       parser.add_argument("-f", "--file-location", required=False, default="/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats",help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
       parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
-      parser.add_argument("-h", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
-      parser.add_argument("-i", "--interval", required=True, default=60, help="manipulate sample interval of data polling. Value in seconds")
+      parser.add_argument("-n", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
+      parser.add_argument("-i", "--interval", required=False, default=60, help="manipulate sample interval of data polling. Value in seconds")
       parser.add_argument("-v", "--verbose", action='store_true',required=False, default=False,help="verbose output")
 
       args = parser.parse_args()
@@ -95,8 +104,9 @@ class json_stat:
       logger.debug(" ".join(sys.argv))
 
   def push_to_graphite(self):
-    #print self.jdata
-    metrics = json.loads(self.jdata)
+    print self.delta_data
+    metrics = self.delta_data
+    #metrics = json.loads(self.jdata)
     content = []
     for metric, value in metrics.iteritems():
       metric = str(metric) 
@@ -108,6 +118,7 @@ class json_stat:
       #bulding the graphite url
       dots = "."
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
+      #print params
       gurl = dots.join(params)
       data_str = '%s %s %s' %(gurl, value, self.epoch_time)
       content.append(data_str)
@@ -156,7 +167,7 @@ class json_stat:
       json_data = json.loads(facter_facts)
       if self.datacenter == None:
         self.datacenter = json_data['datacenter']
-      elif self.hostname == None:
+      if self.hostname == None:
         self.hostname = json_data['hostname']
       #print self.datacenter
       #print self.hostname
