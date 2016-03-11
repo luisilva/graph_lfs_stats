@@ -19,38 +19,61 @@ class json_stat:
   def __init__(self):
     self.argparser = self.argparser()
     if not os.path.isfile(facter_json_file_location):
-      self.get_facts = self.get_facts() 
-    self.dictify_facts = self.dictify_facts()
+      self.get_facts = self.get_facts()
+    if self.datacenter or self.hostname == None:
+      self.dictify_facts = self.dictify_facts()
     self.get_epoch = self.get_epoch()
     self.dictify_mdstat = self.dictify_mdstat()    
+    self.get_delta = self.get_delta()
     self.push_to_graphite = self.push_to_graphite()
 
   def dictify_mdstat(self):
-    try:
+    sample=1
+    while sample <=2:
+      try:
         f = open(self.filename, 'r')
-    except:
+      except:
         sys.stderr.write("failed to open"+self.filename+"\n")
         sys.exit(-1)
 
-    data = {'source':f.name}
-    #read the strcture line at a time and build a dict out of it:
-    for line in f:
-      words = line.split()
-      #OST's use formats where the last number is the one you want
-      #read_bytes                100121201 samples [bytes] 0 1048576 54023523712987
-      if(words[-1].isdigit()):
-           data[words[0]] = words[-1]
-      else:
-           data[words[0]] = words[1]
-    f.close()
-    self.jdata = json.JSONEncoder().encode(data)
+      data = {'source':f.name}
+      #read the strcture line at a time and build a dict out of it:
+      for line in f:
+        words = line.split()
+        #OST's use formats where the last number is the one you want
+        #read_bytes                100121201 samples [bytes] 0 1048576 54023523712987
+        if(words[-1].isdigit()):
+          data[words[0]] = words[-1]
+        else:
+          data[words[0]] = words[1]
+      f.close()
+      if sample = 1: 
+        self.jdata1 = json.JSONEncoder().encode(data)
+      elif sample = 2:
+        self.jdata2 = json.JSONEncoder().encode(data)
+      sample += 1
+      time.sleep(self.interval)
 
+  def get_delta(self):
+    print self.jdata2
+    print self.jdata1
+
+    self.delta_data={}
+    for latest_metric, latest_value in self.jdata2.iteritems():
+      for previous_metric, previous_value in self.jdata1.iteritems():
+      delta_metric = str(previous_metric)
+      delta_value = latest_value - previous_value
+      self.delta_data[delta_metric] = delta_value
+  
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
       parser.add_argument("-m", "--mdt", required=False,default=True, help="parsing md_stat on and MDS host")
-      parser.add_argument("-o", "--ost", required=False, help="parsing md_stat on and MDS host")
+      parser.add_argument("-o", "--ost", required=False, help="parsing stats on and OSS host")
       parser.add_argument("-f", "--file-location", required=False, default="/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats",help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
+      parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
+      parser.add_argument("-h", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
+      parser.add_argument("-i", "--interval", required=True, default=60, help="manipulate sample interval of data polling. Value in seconds")
       parser.add_argument("-v", "--verbose", action='store_true',required=False, default=False,help="verbose output")
 
       args = parser.parse_args()
@@ -59,6 +82,9 @@ class json_stat:
       self.verbose = args.verbose
       self.mdt = args.mdt
       self.ost = args.ost
+      self.datacenter = args.datacenter
+      self.hostname = args.hostname
+      self.interval = args.interval
 
       debug = args.verbose
       log_level = logging.INFO
@@ -128,8 +154,10 @@ class json_stat:
     with open(facter_json_file_location) as facter_file:    
       facter_facts = json.load(facter_file)
       json_data = json.loads(facter_facts)
-      self.datacenter = json_data['datacenter']
-      self.hostname = json_data['hostname']
+      if self.datacenter == None:
+        self.datacenter = json_data['datacenter']
+      elif self.hostname == None:
+        self.hostname = json_data['hostname']
       #print self.datacenter
       #print self.hostname
 
