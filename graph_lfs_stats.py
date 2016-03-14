@@ -69,7 +69,8 @@ class json_stat:
         continue
       previous_value = jdata1[delta_metric]
       #print previous_value
-      delta_value = int(latest_value) - int(previous_value)
+      #print "%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval)
+      delta_value = (int(latest_value) - int(previous_value))/self.interval
       #print delta_value
       self.delta_data[delta_metric] = delta_value
       #print self.delta_data
