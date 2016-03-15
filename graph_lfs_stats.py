@@ -1,15 +1,5 @@
 #!/usr/bin/python
 
-'''
-Takes data in the form of:
-metric         number
-snapshot_time             1396141904.951010 secs.usecs
-open                      28540765918 samples [reqs]
-close                     10256936166 samples [reqs]
-mknod                     30061 samples [reqs]
-and creates a json version:
-metic: number
-'''
 
 import sys,os,json,argparse,logging,time,socket
 from subprocess import Popen, PIPE
@@ -23,7 +13,10 @@ class json_stat:
     if self.datacenter == None or self.hostname == None:
       self.dictify_facts = self.dictify_facts()
     self.get_epoch = self.get_epoch()
-    self.dictify_mdstat = self.dictify_mdstat()    
+    if self.mdt:
+      self.dictify_mdstat = self.dictify_mdstat()    
+    elif self.ost:
+      self.dictify_ost = self.dictify_oss_stat()
     self.get_delta = self.get_delta()
     self.push_to_graphite = self.push_to_graphite()
 
@@ -54,6 +47,34 @@ class json_stat:
       sample += 1
       time.sleep(self.interval)
 
+  def dictify_oss_stat(self):
+    sample = 1
+    while sample <= 2:
+      try:
+        f = open(self.filename, 'r')
+      except:
+        sys.stderr.write("failed to open"+self.filename+"\n")
+        sys.exit(-1)
+
+      data = {'source':f.name}
+      #read the strcture line at a time and build a dict out of it:
+      for line in f:
+        words = line.split()
+        #OST's use formats where the last number is the one you want
+        #read_bytes                100121201 samples [bytes] 0 1048576 54023523712987
+        if(words[-1].isdigit()):
+          data[words[0]] = words[-1]
+        else:
+          data[words[0]] = words[1]
+      f.close()
+      if sample == 1: 
+        self.jdata1 = json.JSONEncoder().encode(data)
+      elif sample == 2:
+        self.jdata2 = json.JSONEncoder().encode(data)
+      sample += 1
+      time.sleep(self.interval)
+
+
   def get_delta(self):
     print self.jdata2
     print self.jdata1
@@ -80,7 +101,7 @@ class json_stat:
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
       parser.add_argument("-m", "--mdt", required=False,default=True, help="parsing md_stat on and MDS host")
       parser.add_argument("-o", "--ost", required=False, help="parsing stats on and OSS host")
-      parser.add_argument("-f", "--file-location", required=False, default="/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats",help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
+      parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
       parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
       parser.add_argument("-n", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
       parser.add_argument("-i", "--interval", required=False, default=60, help="manipulate sample interval of data polling. Value in seconds")
@@ -91,6 +112,10 @@ class json_stat:
       self.filename = args.file_location
       self.verbose = args.verbose
       self.mdt = args.mdt
+      if self.mdt and self.filename=None:
+        self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
+      elif self.ost and self.filename=None:
+        self.filename ='/proc/fs/lustre/ost/OSS/ost/stats'
       self.ost = args.ost
       self.datacenter = args.datacenter
       self.hostname = args.hostname
