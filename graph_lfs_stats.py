@@ -99,8 +99,8 @@ class json_stat:
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
-      parser.add_argument("-m", "--mdt", required=False,default=True, help="parsing md_stat on and MDS host")
-      parser.add_argument("-o", "--ost", required=False, help="parsing stats on and OSS host")
+      parser.add_argument("-m", "--mdt", required=False,default=False,action='store_true', help="parsing md_stat on and MDS host")
+      parser.add_argument("-o", "--ost", required=False,default=False,action='store_true', help="parsing stats on and OSS host")
       parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
       parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
       parser.add_argument("-n", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
@@ -112,11 +112,11 @@ class json_stat:
       self.filename = args.file_location
       self.verbose = args.verbose
       self.mdt = args.mdt
-      if self.mdt and self.filename=None:
-        self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
-      elif self.ost and self.filename=None:
-        self.filename ='/proc/fs/lustre/ost/OSS/ost/stats'
       self.ost = args.ost
+      if self.mdt and self.filename==None:
+        self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
+      elif self.ost and self.filename==None:
+        self.filename ='/proc/fs/lustre/ost/OSS/ost/stats'
       self.datacenter = args.datacenter
       self.hostname = args.hostname
       self.interval = args.interval
@@ -125,7 +125,10 @@ class json_stat:
       log_level = logging.INFO
       if debug == True:
         log_level = logging.DEBUG
-      logging.basicConfig(filename="/var/log/graphite/graph_lfs_stats.log", level=log_level, format=LOG_FORMAT)
+      if not os.path.isdir(log_location):
+        os.makedirs(log_location)
+      log_file = "%sgraph_lfs_stats.log" %log_location
+      logging.basicConfig(filename=log_file, level=log_level, format=LOG_FORMAT)
 
       logger.debug(" ".join(sys.argv))
 
@@ -200,7 +203,8 @@ class json_stat:
 
 if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
-  logger = logging.getLogger('/var/log/graphite/graph_lfs_stats.log')
+  log_location ='/var/log/graphite/'
+  logger = logging.getLogger(log_location)
   facter_json_file_location = '/var/graphite/facts/facts.json'
   facter_json_location = '/var/graphite/facts'
   graphite_server = 'graph.rc.fas.harvard.edu'
