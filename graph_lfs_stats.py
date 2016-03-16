@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-
 import sys,os,json,argparse,logging,time,socket
 from subprocess import Popen, PIPE
 
@@ -14,10 +13,11 @@ class json_stat:
       self.dictify_facts = self.dictify_facts()
     self.get_epoch = self.get_epoch()
     if self.mds:
-      self.dictify_mdstat = self.dictify_mdstat()    
+      self.dictify_mdstat = self.dictify_mdstati()
+      #self.get_mds_delta = self.get_mds_delta()    
     elif self.oss:
       self.dictify_oss = self.dictify_oss_stat()
-    #self.get_delta = self.get_delta()
+      self.get_oss_delta = self.get_oss_delta() 
     #self.push_to_graphite = self.push_to_graphite()
 
   def dictify_mdstat(self):
@@ -48,29 +48,68 @@ class json_stat:
       time.sleep(self.interval)
 
   def dictify_oss_stat(self):
+    lctl_cmd = self.filename.split(" ")
+    odbfilter = {}
+    odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
+    odbfilter_out,odbfilter_err = odbfilter.communicate()
+    if not odbfilter_out and not odbfilter_err:
+      print "nada!"
+    elif not odbfilter_out:
+      print "Um not getting any odbfilter info"
+    elif odbfilter_err.rstrip():
+      print "Error:<<%s>>" %odbfilter_err
+
     sample = 1
-    while sampe <=2:
-      odbfitler = Popen([self.filename], stdout=PIPE, stderr=PIPE)
-      odbfitler_out,odbfitler_err = odbfitler.communicate()
-
-      if not odbfitler_out and not odbfitler_err:
-        print "nada!"
-      elif not odbfitler_out:
-        print "Um not getting any odbfitler info"
-      elif odbfitler_err.rstrip():
-        print "Error:<<%s>>" %odbfitler_err
-
+    while sample <=2:
       # get list of ost's
-      for ost in odbfilter:
-        print ost
-      '''if sample == 1: 
-        self.jdata1 = json.JSONEncoder().encode(data)
+      read_io = {}
+      write_io = {}
+      read_bytes = {}
+      write_bytes = {}
+      for ost in odbfilter_out.splitlines():
+	get_param = "lctl get_param %s" %ost
+        #print get_param
+        get_param = get_param.split()
+        #print get_param
+        ost_stats = {}
+	ost_stats = Popen(get_param, stdout=PIPE, stderr=PIPE)
+        ost_stat_out, ost_stat_err = ost_stats.communicate()
+        #print ost_stat_out 
+	#print ost_stat_err
+        #get ost name 
+        ost_name = ost.split('.')[1].split('-')[1]
+	counter=0
+        for metrics in ost_stat_out.splitlines():
+          for metric in metrics.splitlines(): 
+	    if not metric.find('read_bytes'):
+	      #print metric
+              read_bytes_lst = metric.split()
+	      key_io = "%s_read_io" %ost_name
+	      key_bytes = "%s_read_bytes" %ost_name
+              read_io[key_io] = read_bytes_lst[1]
+	      read_bytes[key_bytes] = read_bytes_lst[6]
+            if not metric.find('write_bytes'):
+              #print metric
+	      write_bytes_lst = metric.split()
+              key_io = "%s_write_io" %ost_name
+              key_bytes = "%s_write_bytes" %ost_name
+	      write_io[key_io] = write_bytes_lst[1] 
+	      write_bytes[key_bytes] = write_bytes_lst[6]
+          counter += 1
+      if sample == 1: 
+        self.read_io = read_io
+        self.write_io = write_io
+        self.read_bytes = read_bytes
+        self.write_bytes = write_bytes
       elif sample == 2:
-        self.jdata2 = json.JSONEncoder().encode(data)
-      sample += 1
-      time.sleep(self.interval)'''
+	self.read_io2 = read_io
+        self.write_io2 = write_io
+        self.read_bytes2 = read_bytes
+        self.write_bytes2 = write_bytes
+      sample += 1 
+      time.sleep(self.interval)
 
-  def get_delta(self):
+  def get_mds_delta(self):
     print self.jdata2
     print self.jdata1
 
@@ -90,6 +129,14 @@ class json_stat:
       #print delta_value
       self.delta_data[delta_metric] = delta_value
       #print self.delta_data
+
+  def get_oss_delta(self):
+    read_io_delta = {}
+    write_io_delta = {}
+    read_bytes_delta = {}
+    write_bytes_delta = {} 
+    for name2,io2 in self.read_io2.iteritems():
+      print name2,io2 
      
   def argparser(self):
       #Setting up parsing options for inputting data
@@ -111,7 +158,7 @@ class json_stat:
       if self.mds and self.filename==None:
         self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
       elif self.oss and self.filename==None:
-        self.filename ='lctl get_param obdfilter.*.stats'
+        self.filename ='lctl list_param obdfilter.*.stats'
       self.datacenter = args.datacenter
       self.hostname = args.hostname
       self.interval = args.interval
@@ -197,12 +244,17 @@ class json_stat:
       #print self.hostname
 
 if __name__ == '__main__':
+  #Global Parameters can be set here:
+  ## Log related setting
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   log_location ='/var/log/graphite/'
   logger = logging.getLogger(log_location)
+  ## Use these if you use facter in your environment
   facter_json_file_location = '/var/graphite/facts/facts.json'
   facter_json_location = '/var/graphite/facts'
+  ## graphite server settings 
   graphite_server = 'graph.rc.fas.harvard.edu'
   graphite_port = 2003
   graphite_service_name = 'md_stat'
+  # main class
   json_stat()
