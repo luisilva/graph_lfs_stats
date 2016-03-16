@@ -17,8 +17,8 @@ class json_stat:
       self.dictify_mdstat = self.dictify_mdstat()    
     elif self.oss:
       self.dictify_oss = self.dictify_oss_stat()
-    self.get_delta = self.get_delta()
-    self.push_to_graphite = self.push_to_graphite()
+    #self.get_delta = self.get_delta()
+    #self.push_to_graphite = self.push_to_graphite()
 
   def dictify_mdstat(self):
     sample = 1
@@ -49,31 +49,26 @@ class json_stat:
 
   def dictify_oss_stat(self):
     sample = 1
-    while sample <= 2:
-      try:
-        f = open(self.filename, 'r')
-      except:
-        sys.stderr.write("failed to open"+self.filename+"\n")
-        sys.exit(-1)
+    while sampe <=2:
+      odbfitler = Popen([self.filename], stdout=PIPE, stderr=PIPE)
+      odbfitler_out,odbfitler_err = odbfitler.communicate()
 
-      data = {'source':f.name}
-      #read the strcture line at a time and build a dict out of it:
-      for line in f:
-        words = line.split()
-        #OST's use formats where the last number is the one you want
-        #read_bytes                100121201 samples [bytes] 0 1048576 54023523712987
-        if(words[-1].isdigit()):
-          data[words[0]] = words[-1]
-        else:
-          data[words[0]] = words[1]
-      f.close()
-      if sample == 1: 
+      if not odbfitler_out and not odbfitler_err:
+        print "nada!"
+      elif not odbfitler_out:
+        print "Um not getting any odbfitler info"
+      elif odbfitler_err.rstrip():
+        print "Error:<<%s>>" %odbfitler_err
+
+      # get list of ost's
+      for ost in odbfilter:
+        print ost
+      '''if sample == 1: 
         self.jdata1 = json.JSONEncoder().encode(data)
       elif sample == 2:
         self.jdata2 = json.JSONEncoder().encode(data)
       sample += 1
-      time.sleep(self.interval)
-
+      time.sleep(self.interval)'''
 
   def get_delta(self):
     print self.jdata2
