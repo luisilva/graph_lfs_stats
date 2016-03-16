@@ -13,10 +13,10 @@ class json_stat:
     if self.datacenter == None or self.hostname == None:
       self.dictify_facts = self.dictify_facts()
     self.get_epoch = self.get_epoch()
-    if self.mdt:
+    if self.mds:
       self.dictify_mdstat = self.dictify_mdstat()    
-    elif self.ost:
-      self.dictify_ost = self.dictify_oss_stat()
+    elif self.oss:
+      self.dictify_oss = self.dictify_oss_stat()
     self.get_delta = self.get_delta()
     self.push_to_graphite = self.push_to_graphite()
 
@@ -99,9 +99,9 @@ class json_stat:
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
-      parser.add_argument("-m", "--mdt", required=False,default=False,action='store_true', help="parsing md_stat on and MDS host")
-      parser.add_argument("-o", "--ost", required=False,default=False,action='store_true', help="parsing stats on and OSS host")
-      parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mdt or ost datafile, default is mdt /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats")
+      parser.add_argument("-m", "--mds", required=False,default=False,action='store_true', help="parsing md_stat on and MDS host")
+      parser.add_argument("-o", "--oss", required=False,default=False,action='store_true', help="parsing stats on and OSS host")
+      parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mds or oss datafile, default is mds /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats,\n when oss is enabled odbfilter will be envoked.")
       parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
       parser.add_argument("-n", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
       parser.add_argument("-i", "--interval", required=False, default=60, help="manipulate sample interval of data polling. Value in seconds")
@@ -111,12 +111,12 @@ class json_stat:
 
       self.filename = args.file_location
       self.verbose = args.verbose
-      self.mdt = args.mdt
-      self.ost = args.ost
-      if self.mdt and self.filename==None:
+      self.mds = args.mds
+      self.oss = args.oss
+      if self.mds and self.filename==None:
         self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
-      elif self.ost and self.filename==None:
-        self.filename ='/proc/fs/lustre/ost/OSS/ost/stats'
+      elif self.oss and self.filename==None:
+        self.filename ='lctl get_param obdfilter.*.stats'
       self.datacenter = args.datacenter
       self.hostname = args.hostname
       self.interval = args.interval
