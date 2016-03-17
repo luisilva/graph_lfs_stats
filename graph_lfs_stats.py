@@ -2,6 +2,7 @@
 
 import sys,os,json,argparse,logging,time,socket
 from subprocess import Popen, PIPE
+from types import *
 
 class json_stat:
 
@@ -14,11 +15,12 @@ class json_stat:
     self.get_epoch = self.get_epoch()
     if self.mds:
       self.dictify_mdstat = self.dictify_mdstati()
-      #self.get_mds_delta = self.get_mds_delta()    
+      self.get_mds_delta = self.get_mds_delta()    
+      self.push_to_graphite = self.push_to_graphite()
     elif self.oss:
       self.dictify_oss = self.dictify_oss_stat()
       self.get_oss_delta = self.get_oss_delta() 
-    #self.push_to_graphite = self.push_to_graphite()
+      self.push_oss_to_graphite = self.push_oss_to_graphite()
 
   def dictify_mdstat(self):
     sample = 1
@@ -135,9 +137,24 @@ class json_stat:
     write_io_delta = {}
     read_bytes_delta = {}
     write_bytes_delta = {} 
-    for name2,io2 in self.read_io2.iteritems():
-      print name2,io2 
-     
+    for key,value in self.read_io2.iteritems():
+      pvalue = self.read_io[key]
+      delta = (float(value) - float(pvalue))/self.interval
+      read_io_delta[key] = delta          
+    for key,value in self.write_io2.iteritems():
+      pvalue = self.write_io[key]
+      delta = (float(value) - float(pvalue))/self.interval
+      write_io_delta[key] = delta 
+    for key,value in self.read_bytes2.iteritems():
+      pvalue = self.read_bytes[key]
+      delta = (float(value) - float(pvalue))/self.interval
+      read_bytes_delta[key] = delta
+    for key,value in self.write_bytes2.iteritems():
+      pvalue = self.write_bytes[key]
+      delta = (float(value) - float(pvalue))/self.interval
+      write_bytes_delta[key] = delta
+    self.delta_oss_list = [read_io_delta, write_io_delta, read_bytes_delta, write_bytes_delta]
+
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
@@ -161,7 +178,7 @@ class json_stat:
         self.filename ='lctl list_param obdfilter.*.stats'
       self.datacenter = args.datacenter
       self.hostname = args.hostname
-      self.interval = args.interval
+      self.interval = int(args.interval)
 
       debug = args.verbose
       log_level = logging.INFO
@@ -208,7 +225,35 @@ class json_stat:
       print "Received:", repr(data)
     print "Connection closed."
     s.close()
-    
+
+  def push_oss_to_graphite(self):
+    content = []
+    dots = "."
+    for dicts in self.delta_oss_list:
+      for metric, value in dicts.iteritems():
+        params = (graphite_service_name, self.datacenter, self.hostname, metric)
+        gurl = dots.join(params)
+        data = '%s %s %s' %(gurl, value, self.epoch_time) 
+        if type(content) is UnicodeType:
+          print content
+          content = [content]
+          print content
+        content.append(data)  
+      content = "\n ".join(content)
+      print "opening Connection."
+      print content
+      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      s.connect((graphite_server, graphite_port))
+      s.sendall(content)
+      s.shutdown(socket.SHUT_WR)
+      while 1:
+        data = s.recv(1024)
+        if data == "":
+          break
+        print "Received:", repr(data)
+      print "Connection closed."
+      s.close()
+  
   def get_epoch(self):
     self.epoch_time = int(time.time())
     #print self.epoch_time
