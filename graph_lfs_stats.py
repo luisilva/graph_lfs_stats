@@ -229,30 +229,32 @@ class json_stat:
   def push_oss_to_graphite(self):
     content = []
     dots = "."
+    #print self.delta_oss_list
     for dicts in self.delta_oss_list:
       for metric, value in dicts.iteritems():
         params = (graphite_service_name, self.datacenter, self.hostname, metric)
         gurl = dots.join(params)
         data = '%s %s %s' %(gurl, value, self.epoch_time) 
-        if type(content) is UnicodeType:
-          print content
-          content = [content]
-          print content
+        #print data
+        if type(data) is UnicodeType:
+          #print type(data)
+          data = str(data)
+          #print data
         content.append(data)  
-      content = "\n ".join(content)
-      print "opening Connection."
-      print content
-      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      s.connect((graphite_server, graphite_port))
-      s.sendall(content)
-      s.shutdown(socket.SHUT_WR)
-      while 1:
-        data = s.recv(1024)
-        if data == "":
-          break
-        print "Received:", repr(data)
-      print "Connection closed."
-      s.close()
+    content = "\n ".join(content)
+    print "opening Connection."
+    print content
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((graphite_server, graphite_port))
+    s.sendall(content)
+    s.shutdown(socket.SHUT_WR)
+    while 1:
+      data = s.recv(1024)
+      if data == "":
+        break
+      print "Received:", repr(data)
+    print "Connection closed."
+    s.close()
   
   def get_epoch(self):
     self.epoch_time = int(time.time())
