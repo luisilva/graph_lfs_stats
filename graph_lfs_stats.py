@@ -57,6 +57,24 @@ class lfs_stats:
       logging.basicConfig(filename=log_file, level=log_level, format=LOG_FORMAT)
 
       logger.debug(" ".join(sys.argv))
+     
+  def get_facts(self):
+    # running facter -p with json output to capture it into a json file to pull into a dictionary later. 
+    facts = {}
+    facts = Popen(['facter', '-p', '--json'], stdout=PIPE, stderr=PIPE)
+    facts_out,facts_err = facts.communicate()
+    if not facts_out and not facts_err:
+      print "nada!"
+    elif not facts_out:
+      print "Um not getting any facts"
+    elif facts_err.rstrip():
+       print "Error:<<%s>>" %facts_err
+    
+    mkdir = Popen(['mkdir', '-p', facter_json_location], stdout=PIPE, stderr=PIPE)
+    mkdir_out,mkdir_err = mkdir.communicate()
+
+    with open(facter_json_file_location , 'w') as outfile:
+      json.dump(facts_out, outfile)
 
   def dictify_facts(self):
     with open(facter_json_file_location) as facter_file:
@@ -174,7 +192,7 @@ class lfs_stats:
     read_io_delta = {}
     write_io_delta = {}
     read_bytes_delta = {}
-    write_bytes_delta = {} 
+    write_bytes_delta = {}
     for key,value in self.read_io2.iteritems():
       pvalue = self.read_io[key]
       delta = (float(value) - float(pvalue))/self.interval
