@@ -153,9 +153,6 @@ class lfs_stats:
       time.sleep(self.interval)
 
   def get_mds_delta(self):
-    print self.jdata2
-    print self.jdata1
-
     self.delta_data={}
     jdata2 = json.loads(self.jdata2)
     jdata1 = json.loads(self.jdata1)
