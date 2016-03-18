@@ -106,7 +106,7 @@ class lfs_stats:
         else:
           data[words[0]] = words[1]
       f.close()
-      if sample == 1: 
+      if sample == 1: cd 
         self.jdata1 = json.JSONEncoder().encode(data)
       elif sample == 2:
         self.jdata2 = json.JSONEncoder().encode(data)
@@ -116,7 +116,10 @@ class lfs_stats:
   def dictify_oss_stat(self):
     lctl_cmd = self.filename.split(" ")
     odbfilter = {}
-    odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
+    try:
+      odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
+    except OSError:
+        logger.critical("OSError")
     odbfilter_out,odbfilter_err = odbfilter.communicate()
     if not odbfilter_out and not odbfilter_err:
       print "nada!"
