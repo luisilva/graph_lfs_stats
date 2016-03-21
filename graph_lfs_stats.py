@@ -125,7 +125,7 @@ class lfs_stats:
         odbfilter_out,odbfilter_err = odbfilter.communicate()
         if not odbfilter_out and not odbfilter_err:
           logger.debug("no output or error for lctl command")
-        elif not odbfilter_out:<<
+        elif not odbfilter_out:
           logger.debug("no output for lctl command")
         elif odbfilter_err.rstrip():
           logger.critical("lclt command error: %s" %odbfilter_err)
