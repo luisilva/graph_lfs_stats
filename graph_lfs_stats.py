@@ -207,8 +207,8 @@ class lfs_stats:
       pvalue = self.write_bytes[key]
       delta = (float(value) - float(pvalue))/self.interval
       write_bytes_delta[key] = delta
-    logger.debug("Delta list of dicts: %s" %self.delta_oss_list)
     self.delta_oss_list = [read_io_delta, write_io_delta, read_bytes_delta, write_bytes_delta]
+    logger.debug("Delta list of dicts: %s" %self.delta_oss_list)
 
   def push_to_graphite(self):
     print self.delta_data
