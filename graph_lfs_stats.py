@@ -126,36 +126,35 @@ class lfs_stats:
           print "Um not getting any odbfilter info"
         elif odbfilter_err.rstrip():
           print "Error:<<%s>>" %odbfilter_err
-        # get list of ost's
-          read_io = {}
-          write_io = {}
-          read_bytes = {}
-          write_bytes = {}
-          for ost in odbfilter_out.splitlines():
-            get_param = "lctl get_param %s" %ost
-            #print get_param
-            get_param = get_param.split()
-            #print get_param
-            ost_stats = {}
-            ost_stats = Popen(get_param, stdout=PIPE, stderr=PIPE)
-            ost_stat_out, ost_stat_err = ost_stats.communicate()
-            #get ost name 
-            ost_name = ost.split('.')[1].split('-')[1]
-            for metrics in ost_stat_out.splitlines():
-              for metric in metrics.splitlines(): 
-                if not metric.find('read_bytes'):
-                  #print metric
-                  read_bytes_lst = metric.split()
-                  key_io = "%s_read_io" %ost_name
-                  key_bytes = "%s_read_bytes" %ost_name
-                  read_io[key_io] = read_bytes_lst[1]
-                  read_bytes[key_bytes] = read_bytes_lst[6]
-                if not metric.find('write_bytes'):
-                  write_bytes_lst = metric.split()
-                  key_io = "%s_write_io" %ost_name
-                  key_bytes = "%s_write_bytes" %ost_name
-                  write_io[key_io] = write_bytes_lst[1] 
-                  write_bytes[key_bytes] = write_bytes_lst[6]
+        read_io = {}
+        write_io = {}
+        read_bytes = {}
+        write_bytes = {}
+        for ost in odbfilter_out.splitlines():
+          get_param = "lctl get_param %s" %ost
+          #print get_param
+          get_param = get_param.split()
+          #print get_param
+          ost_stats = {}
+          ost_stats = Popen(get_param, stdout=PIPE, stderr=PIPE)
+          ost_stat_out, ost_stat_err = ost_stats.communicate()
+          #get ost name 
+          ost_name = ost.split('.')[1].split('-')[1]
+          for metrics in ost_stat_out.splitlines():
+            for metric in metrics.splitlines(): 
+              if not metric.find('read_bytes'):
+                #print metric
+                read_bytes_lst = metric.split()
+                key_io = "%s_read_io" %ost_name
+                key_bytes = "%s_read_bytes" %ost_name
+                read_io[key_io] = read_bytes_lst[1]
+                read_bytes[key_bytes] = read_bytes_lst[6]
+              if not metric.find('write_bytes'):
+                write_bytes_lst = metric.split()
+                key_io = "%s_write_io" %ost_name
+                key_bytes = "%s_write_bytes" %ost_name
+                write_io[key_io] = write_bytes_lst[1] 
+                write_bytes[key_bytes] = write_bytes_lst[6]
           if sample == 1: 
             self.read_io = read_io
             self.write_io = write_io
