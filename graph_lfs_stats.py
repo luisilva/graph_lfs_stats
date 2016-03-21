@@ -105,7 +105,7 @@ class lfs_stats:
         else:
           data[words[0]] = words[1]
       f.close()
-      if sample == 1: cd 
+      if sample == 1:
         self.jdata1 = json.JSONEncoder().encode(data)
       elif sample == 2:
         self.jdata2 = json.JSONEncoder().encode(data)
