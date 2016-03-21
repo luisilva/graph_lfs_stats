@@ -177,7 +177,7 @@ class lfs_stats:
     jdata1 = json.loads(self.jdata1)
     for latest_metric, latest_value in jdata2.iteritems():
       delta_metric = str(latest_metric)
-      logger.debug("mds_delta_metric: %s" %self.delta_metric)
+      logger.debug("mds_delta_metric: %s" %delta_metric)
       if delta_metric == 'source' or delta_metric == 'snapshot_time':
         continue
       previous_value = jdata1[delta_metric]
