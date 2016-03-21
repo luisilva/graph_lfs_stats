@@ -144,7 +144,7 @@ class lfs_stats:
           ost_name = ost.split('.')[1].split('-')[1]
           for metrics in ost_stat_out.splitlines():
             for metric in metrics.splitlines(): 
-              if not metric.find('read_bytes')
+              if not metric.find('read_bytes'):
                 read_bytes_lst = metric.split()
                 key_io = "%s_read_io" %ost_name
                 key_bytes = "%s_read_bytes" %ost_name
