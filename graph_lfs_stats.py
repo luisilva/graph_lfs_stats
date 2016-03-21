@@ -168,9 +168,8 @@ class lfs_stats:
             self.write_bytes2 = write_bytes
         sample += 1 
         time.sleep(self.interval)
-      except OSError:
-        logger.critical("OSError")
-        pass
+      except OSError, e:
+        logger.critical("OSError: %s"" %e)
 
   def get_mds_delta(self):
     self.delta_data={}
