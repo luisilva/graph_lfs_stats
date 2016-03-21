@@ -42,7 +42,7 @@ class lfs_stats:
       if self.mds and self.filename==None:
         self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
       elif self.oss and self.filename==None:
-        self.filename ='lctl list_param obdfilter.*.stats'
+        self.filename ='/usr/sbin/lctl list_param obdfilter.*.stats'
       self.datacenter = args.datacenter
       self.hostname = args.hostname
       self.interval = int(args.interval)
