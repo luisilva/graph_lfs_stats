@@ -117,9 +117,9 @@ class lfs_stats:
     odbfilter = {}
     try:
       odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
+      odbfilter_out,odbfilter_err = odbfilter.communicate()
     except OSError:
-        logger.critical("OSError")
-    odbfilter_out,odbfilter_err = odbfilter.communicate()
+      logger.critical("OSError")
     if not odbfilter_out and not odbfilter_err:
       print "nada!"
     elif not odbfilter_out:
