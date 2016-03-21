@@ -96,7 +96,6 @@ class lfs_stats:
       except:
         sys.stderr.write("failed to open"+self.filename+"\n")
         sys.exit(-1)
-
       data = {'source':f.name}
       #read the strcture line at a time and build a dict out of it:
       for line in f:
