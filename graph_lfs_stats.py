@@ -87,7 +87,7 @@ class lfs_stats:
 
   def get_epoch(self):
     self.epoch_time = int(time.time())
-    logger.debug("epoch_time:" %self.epoch_time)
+    logger.debug("epoch_time: %s" %self.epoch_time)
 
   def dictify_mdstat(self):
     sample = 1
