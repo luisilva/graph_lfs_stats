@@ -220,7 +220,7 @@ class lfs_stats:
       if metric == 'source':
         continue
       value = float(value)
-      logger.debug("mds value and metrics: %s" %(metric, value))
+      logger.debug("mds value and metrics: %s : %s" %(metric, value))
       #bulding the graphite url
       dots = "."
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
