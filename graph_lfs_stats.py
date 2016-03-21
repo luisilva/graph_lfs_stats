@@ -240,6 +240,7 @@ class lfs_stats:
       data = s.recv(1024)
       if data == "":
           break
+      print "Received:", repr(data))
       logger.debug("Recieved: %s" %(repr(data))
     logger.debug("<<< Connection Closed >>>")
     s.close()
