@@ -216,11 +216,11 @@ class lfs_stats:
     #metrics = json.loads(self.jdata)
     content = []
     for metric, value in metrics.iteritems():
+      logger.debug("mds value and metrics: %s : %s" %(metric, value))
       metric = str(metric) 
       if metric == 'source':
         continue
       value = float(value)
-      logger.debug("mds value and metrics: %s : %s" %(metric, value))
       #bulding the graphite url
       dots = "."
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
