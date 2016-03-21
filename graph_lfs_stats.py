@@ -224,7 +224,7 @@ class lfs_stats:
       #bulding the graphite url
       dots = "."
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
-      logger.debug("parameter strick getting sent to graphite: %s" %param)
+      logger.debug("parameter strick getting sent to graphite: %s" %params)
       gurl = dots.join(params)
       data_str = '%s %s %s' %(gurl, value, self.epoch_time)
       content.append(data_str)
