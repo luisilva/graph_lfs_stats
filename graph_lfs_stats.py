@@ -87,6 +87,7 @@ class lfs_stats:
 
   def get_epoch(self):
     self.epoch_time = int(time.time())
+    logger.debug("epoch_time:" %self.epoch_time)
 
   def dictify_mdstat(self):
     sample = 1
@@ -111,6 +112,8 @@ class lfs_stats:
         self.jdata2 = json.JSONEncoder().encode(data)
       sample += 1
       time.sleep(self.interval)
+      logger.debug("first data poll:" % self.jdata1)
+      logger.debug("Second data poll" %self.jdata2)
 
   def dictify_oss_stat(self):
     lctl_cmd = self.filename.split(" ")
@@ -121,11 +124,11 @@ class lfs_stats:
         odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
         odbfilter_out,odbfilter_err = odbfilter.communicate()
         if not odbfilter_out and not odbfilter_err:
-          print "nada!"
-        elif not odbfilter_out:
-          print "Um not getting any odbfilter info"
+          logger.debug("no output or error for lctl command")
+        elif not odbfilter_out:<<
+          logger.debug("no output for lctl command")
         elif odbfilter_err.rstrip():
-          print "Error:<<%s>>" %odbfilter_err
+          logger.critical("lclt command error: %s" %odbfilter_err)
         read_io = {}
         write_io = {}
         read_bytes = {}
@@ -134,16 +137,14 @@ class lfs_stats:
           get_param = "lctl get_param %s" %ost
           #print get_param
           get_param = get_param.split()
-          #print get_param
+          logger.debug("passing ost parms: %s" %get_param)
           ost_stats = {}
           ost_stats = Popen(get_param, stdout=PIPE, stderr=PIPE)
           ost_stat_out, ost_stat_err = ost_stats.communicate()
-          #get ost name 
           ost_name = ost.split('.')[1].split('-')[1]
           for metrics in ost_stat_out.splitlines():
             for metric in metrics.splitlines(): 
-              if not metric.find('read_bytes'):
-                #print metric
+              if not metric.find('read_bytes')
                 read_bytes_lst = metric.split()
                 key_io = "%s_read_io" %ost_name
                 key_bytes = "%s_read_bytes" %ost_name
@@ -175,18 +176,15 @@ class lfs_stats:
     jdata2 = json.loads(self.jdata2)
     jdata1 = json.loads(self.jdata1)
     for latest_metric, latest_value in jdata2.iteritems():
-      #for previous_metric, previous_value in self.jdata1.iteritems():
       delta_metric = str(latest_metric)
-      #print delta_metric
+      logger.debug("mds_delta_metric: %s" %self.delta_metric)
       if delta_metric == 'source' or delta_metric == 'snapshot_time':
         continue
       previous_value = jdata1[delta_metric]
-      #print previous_value
-      #print "%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval)
+      logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
       delta_value = (int(latest_value) - int(previous_value))/self.interval
-      #print delta_value
       self.delta_data[delta_metric] = delta_value
-      #print self.delta_data
+      logger.debug("mds_delta_data: %s" %self.delta_data)
 
   def get_oss_delta(self):
     read_io_delta = {}
@@ -209,6 +207,7 @@ class lfs_stats:
       pvalue = self.write_bytes[key]
       delta = (float(value) - float(pvalue))/self.interval
       write_bytes_delta[key] = delta
+    logger.debug("Delta list of dicts: %s" %self.delta_oss_list)
     self.delta_oss_list = [read_io_delta, write_io_delta, read_bytes_delta, write_bytes_delta]
 
   def push_to_graphite(self):
@@ -221,12 +220,11 @@ class lfs_stats:
       if metric == 'source':
         continue
       value = float(value)
-      #print metric, value 
-      '''echo "llstat.holyoke.bulfs01mds.open 301 `date +%s`" |nc graph.rc.fas.harvard.edu 2003'''
+      logger.debug("mds value and metrics: %s" %(metric, value))
       #bulding the graphite url
       dots = "."
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
-      #print params
+      logger.debug("parameter strick getting sent to graphite: %s" %param)
       gurl = dots.join(params)
       data_str = '%s %s %s' %(gurl, value, self.epoch_time)
       content.append(data_str)
