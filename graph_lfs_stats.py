@@ -230,8 +230,8 @@ class lfs_stats:
       content.append(data_str)
     
     content = "\n ".join(content)
-    print "opening Connection."
-    print content
+    logger.debug("<<< Opening Connection >>>")
+    logger.debug("Pushing data: \n %s" %content)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((graphite_server, graphite_port))
     s.sendall(content)
@@ -240,8 +240,8 @@ class lfs_stats:
       data = s.recv(1024)
       if data == "":
           break
-      print "Received:", repr(data)
-    print "Connection closed."
+      logger.debug("Recieved: %s" %(repr(data))
+    logger.debug("<<< Connection Closed >>>")
     s.close()
 
   def push_oss_to_graphite(self):
