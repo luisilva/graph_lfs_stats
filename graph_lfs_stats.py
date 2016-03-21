@@ -118,15 +118,14 @@ class lfs_stats:
     try:
       odbfilter = Popen(lctl_cmd, stdout=PIPE, stderr=PIPE)
       odbfilter_out,odbfilter_err = odbfilter.communicate()
+      if not odbfilter_out and not odbfilter_err:
+        print "nada!"
+      elif not odbfilter_out:
+        print "Um not getting any odbfilter info"
+      elif odbfilter_err.rstrip():
+        print "Error:<<%s>>" %odbfilter_err
     except OSError:
       logger.critical("OSError")
-    if not odbfilter_out and not odbfilter_err:
-      print "nada!"
-    elif not odbfilter_out:
-      print "Um not getting any odbfilter info"
-    elif odbfilter_err.rstrip():
-      print "Error:<<%s>>" %odbfilter_err
-
     sample = 1
     while sample <=2:
       # get list of ost's
