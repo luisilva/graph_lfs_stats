@@ -112,8 +112,8 @@ class lfs_stats:
         self.jdata2 = json.JSONEncoder().encode(data)
       sample += 1
       time.sleep(self.interval)
-      logger.debug("first data poll: %s" %self.jdata1)
-      logger.debug("Second data poll: %s" %self.jdata2)
+    logger.debug("first data poll: %s" %self.jdata1)
+    logger.debug("Second data poll: %s" %self.jdata2)
 
   def dictify_oss_stat(self):
     lctl_cmd = self.filename.split(" ")
