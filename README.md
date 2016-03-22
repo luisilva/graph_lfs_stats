@@ -28,7 +28,7 @@ optional arguments:
                         seconds
   -v, --verbose         verbose output
 ```
-Config parameters can be set in the main section of the code at the very bottom of the graph script: 
+###Config parameters can be set in the main section of the code at the very bottom of the graph script: 
 ````
   #Global Parameters can be set here:
   ## Log related setting
