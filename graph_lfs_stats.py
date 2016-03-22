@@ -211,7 +211,7 @@ class lfs_stats:
     logger.debug("Delta list of dicts: %s" %self.delta_oss_list)
 
   def push_to_graphite(self):
-    logger.debug("MDS delta data output: \n%s" self.delta_data)
+    logger.debug("MDS delta data output: \n%s" %self.delta_data)
     metrics = self.delta_data
     #metrics = json.loads(self.jdata)
     content = []
