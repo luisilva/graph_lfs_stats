@@ -19,6 +19,7 @@ class lfs_stats:
       self.push_to_graphite = self.push_to_graphite()
     elif self.oss:# If flag for mds is set this means we are gathering OSS Stats.
       self.dictify_oss = self.dictify_oss_stat()
+      self.dictify_brw = self.dictify_brw()
       self.get_oss_delta = self.get_oss_delta()
       self.push_oss_to_graphite = self.push_oss_to_graphite()
 
@@ -170,7 +171,24 @@ class lfs_stats:
         time.sleep(self.interval)
       except OSError, e:
         logger.critical("OSError: %s" %e)
-
+        
+  def dictify_brw(self):
+    brw = {}
+    sample = 1
+    while sample <=2:
+      try:
+        brw = Popen(brw_cmd, stdout=PIPE, stderr=PIPE)
+        brw_out, brw_err = odbfilter.communicate()
+        if not brw_out and not brw_err:
+          logger.debug("no output or error for lctl command")
+        elif not brw_out:
+          logger.debug("no output for lctl command")
+        elif brw_err.rstrip():
+          logger.critical("lclt command error: %s" %brw_err)
+        print brw_out
+      except OSError, e:
+        logger.critical("OSError: %s" %e)  
+      
   def get_mds_delta(self):
     self.delta_data={}
     jdata2 = json.loads(self.jdata2)
@@ -289,5 +307,8 @@ if __name__ == '__main__':
   graphite_server = 'graph.rc.fas.harvard.edu'
   graphite_port = 2003
   graphite_service_name = 'lfs_stats'
+  # block read/write command
+  # This is quick and dirty, probably a better way to do this:
+  brw_cmd = 'tail -n 11 /proc/fs/lustre/obdfilter/*/brw_stats'
   # main class
   lfs_stats()
