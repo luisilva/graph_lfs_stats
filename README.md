@@ -28,3 +28,18 @@ optional arguments:
                         seconds
   -v, --verbose         verbose output
 ```
+Config parameters can be set in the main section of the code at the very bottom of the graph script: 
+````
+  #Global Parameters can be set here:
+  ## Log related setting
+  LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
+  log_location ='<Custom log path>'
+  logger = logging.getLogger(log_location)
+  ## Use these if you use facter in your environment
+  facter_json_file_location = '<Facter file facts.json>'
+  facter_json_location = '<Facter file parent path>'
+  ## graphite server settings 
+  graphite_server = '<graphite server hostname>'
+  graphite_port = <Graphite listner port>
+  graphite_service_name = '<Graphite service name>'
+  ````
