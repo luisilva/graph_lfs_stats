@@ -201,7 +201,7 @@ class lfs_stats:
     while sample <=2:
       try:
         brw = Popen(brw_in, stdout=PIPE, stderr=PIPE)
-        brw_out, brw_err = odbfilter.communicate()
+        brw_out, brw_err = brw.communicate()
         if not brw_out and not brw_err:
           logger.debug("no output or error for lctl command")
         elif not brw_out:
