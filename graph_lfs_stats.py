@@ -174,6 +174,8 @@ class lfs_stats:
         
   def dictify_brw(self):
     brw = {}
+    brw_cmd = brw_cmd.split(" ")
+    print brw_cmd
     sample = 1
     while sample <=2:
       try:
@@ -309,6 +311,6 @@ if __name__ == '__main__':
   graphite_service_name = 'lfs_stats'
   # block read/write command
   # This is quick and dirty, probably a better way to do this:
-  brw_cmd = 'tail -n 11 /proc/fs/lustre/obdfilter/*/brw_stats'
+  brw_cmd = 'tail -n11 /proc/fs/lustre/obdfilter/*/brw_stats'
   # main class
   lfs_stats()
