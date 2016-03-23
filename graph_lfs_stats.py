@@ -209,6 +209,7 @@ class lfs_stats:
         elif brw_err.rstrip():
           logger.critical("lclt command error: %s" %brw_err)
         print brw_out
+        sample += 1
       except OSError, e:
         logger.critical("OSError: %s" %e)  
       
