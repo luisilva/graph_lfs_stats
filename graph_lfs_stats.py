@@ -195,12 +195,12 @@ class lfs_stats:
         
   def dictify_brw(self):
     brw = {}
-    brw_cmd = brw_cmd.split(" ")
+    brw_in = brw_cmd.split(" ")
     print brw_cmd
     sample = 1
     while sample <=2:
       try:
-        brw = Popen(brw_cmd, stdout=PIPE, stderr=PIPE)
+        brw = Popen(brw_in, stdout=PIPE, stderr=PIPE)
         brw_out, brw_err = odbfilter.communicate()
         if not brw_out and not brw_err:
           logger.debug("no output or error for lctl command")
