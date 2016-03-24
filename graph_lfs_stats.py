@@ -91,6 +91,24 @@ class lfs_stats:
     logger.debug("epoch_time: %s" %self.epoch_time)
 
   def dictify_mdstat(self):
+    mdt_location = 'ls /proc/fs/lustre/mdt/'
+    mdt_location = mdt_location.split()
+    mdt_cmd = (mdt_location, stdout=PIPE, stderr=PIPE)
+    mdt_out, mdt_err = mdt_cmd.communicate()
+    if not mdt_out and not mdt_err:
+      print "nada!"
+    elif not mdt_out:
+      print "Um not getting any facts"
+    elif mdt_err.rstrip():
+      print "Error:<<%s>>" %mdt_err
+    mdt_list = []
+    for mdt in mdt_out: 
+      if "MDT" in items:
+        print mdt
+        mdt_list.append(mdt)
+    if self.filename == None: 
+      for mdt in mdt_list:
+        self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %(mdt)
     sample = 1
     while sample <= 2:
       try:
