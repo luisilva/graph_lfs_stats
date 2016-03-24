@@ -106,6 +106,7 @@ class lfs_stats:
       if "MDT" in mdt:
         print mdt
         mdt_list.append(mdt)
+    print mdt_list
     if self.filename == None: 
       for mdt in mdt_list:
         self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
