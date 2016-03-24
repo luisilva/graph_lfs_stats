@@ -103,7 +103,7 @@ class lfs_stats:
       print "Error:<<%s>>" %mdt_err
     mdt_list = []
     for mdt in mdt_out: 
-      if "MDT" in items:
+      if "MDT" in mdt:
         print mdt
         mdt_list.append(mdt)
     if self.filename == None: 
