@@ -93,7 +93,7 @@ class lfs_stats:
   def dictify_mdstat(self):
     mdt_location = 'ls /proc/fs/lustre/mdt/'
     mdt_location = mdt_location.split()
-    mdt_cmd = (mdt_location, stdout=PIPE, stderr=PIPE)
+    mdt_cmd = Popen(mdt_location, stdout=PIPE, stderr=PIPE)
     mdt_out, mdt_err = mdt_cmd.communicate()
     if not mdt_out and not mdt_err:
       print "nada!"
