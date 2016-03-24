@@ -108,7 +108,7 @@ class lfs_stats:
         mdt_list.append(mdt)
     if self.filename == None: 
       for mdt in mdt_list:
-        self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %(mdt)
+        self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
     sample = 1
     while sample <= 2:
       try:
