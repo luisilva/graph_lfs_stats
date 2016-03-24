@@ -110,6 +110,7 @@ class lfs_stats:
       for mdt in mdt_list:
         self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
         self.filename =str(self.filename)
+        print type(self.filename)
     sample = 1
     while sample <= 2:
       try:
