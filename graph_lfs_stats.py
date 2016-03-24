@@ -27,7 +27,7 @@ class lfs_stats:
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
       parser.add_argument("-m", "--mds", required=False,default=False,action='store_true', help="parsing md_stat on and MDS host")
       parser.add_argument("-o", "--oss", required=False,default=False,action='store_true', help="parsing stats on and OSS host")
-      parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mds or oss datafile, default is mds /proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats,\n when oss is enabled odbfilter will be envoked.")
+      parser.add_argument("-f", "--file-location", required=False, default=None,help="location of mds or oss datafile, default is mds /proc/fs/lustre/mdt/<hostname>-MDT0000/md_stats,\n when oss is enabled odbfilter will be envoked.")
       parser.add_argument("-d", "--datacenter", required=False, default=None, help="Pass datacenter value for graphite ingest string to parse. eg. (holyoke, 1ss, 60ox)")
       parser.add_argument("-n", "--hostname", required=False, default=None, help="Pass shortname hostname value for graphite ingest string to parse. eg. (rcwebsite2)")
       parser.add_argument("-i", "--interval", required=False, default=60, help="manipulate sample interval of data polling. Value in seconds")
@@ -39,12 +39,13 @@ class lfs_stats:
       self.verbose = args.verbose
       self.mds = args.mds
       self.oss = args.oss
-      if self.mds and self.filename==None:
-        self.filename ='/proc/fs/lustre/mdt/bulfs01-MDT0000/md_stats'
+      self.hostname = args.hostname
+      if self.mds and self.filename==None and self.hostname:
+        self.filename ='/proc/fs/lustre/mdt/%s-MDT0000/md_stats' %self.hostname
+        print self.filename
       elif self.oss and self.filename==None:
         self.filename ='/usr/sbin/lctl list_param obdfilter.*.stats'
       self.datacenter = args.datacenter
-      self.hostname = args.hostname
       self.interval = int(args.interval)
 
       debug = args.verbose
