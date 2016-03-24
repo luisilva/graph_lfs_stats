@@ -175,7 +175,7 @@ class lfs_stats:
   def dictify_brw(self):
     brw = {}
     brw_in = brw_cmd.split(" ")
-    print brw_cmd
+    print brw_in
     sample = 1
     while sample <=2:
       try:
