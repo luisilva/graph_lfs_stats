@@ -202,6 +202,7 @@ class lfs_stats:
       try:
         brw = Popen(brw_in, stdout=PIPE, stderr=PIPE)
         brw_out, brw_err = brw.communicate()
+        print "out:%s\nin: %s" %s(brw_out, brw_err)
         if not brw_out and not brw_err:
           logger.debug("no output or error for lctl command")
         elif not brw_out:
