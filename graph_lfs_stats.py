@@ -91,27 +91,26 @@ class lfs_stats:
     logger.debug("epoch_time: %s" %self.epoch_time)
 
   def dictify_mdstat(self):
-    if self.filename == None: 
-      mdt_location = 'ls /proc/fs/lustre/mdt/'
-      mdt_location = mdt_location.split()
-      mdt_cmd = Popen(mdt_location, stdout=PIPE, stderr=PIPE)
-      mdt_out, mdt_err = mdt_cmd.communicate()
-      if not mdt_out and not mdt_err:
-        print "nada!"
-      elif not mdt_out:
-        print "Um not getting any facts"
-      elif mdt_err.rstrip():
-        print "Error:<<%s>>" %mdt_err
-      mdt_list = []
-      for mdt in mdt_out: 
-        if "MDT" in mdt:
-          print mdt
-          mdt_list.append(mdt)
-      print mdt_list
-      for mdt in mdt_list:
-        self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
-        self.filename =str(self.filename)
-        print type(self.filename)
+    if self.filename == None:
+      try: 
+        mdt_location = 'ls /proc/fs/lustre/mdt/'
+        mdt_location = mdt_location.split()
+        mdt_cmd = Popen(mdt_location, stdout=PIPE, stderr=PIPE)
+        mdt_out, mdt_err = mdt_cmd.communicate()
+        if not mdt_out and not mdt_err:
+          print "nada!"
+        elif not mdt_out:
+          print "Um not getting any facts"
+        elif mdt_err.rstrip():
+          print "Error:<<%s>>" %mdt_err
+        mdt_list = []
+        for mdt in mdt_out.split("\n"): 
+          if 'MDT' in mdt:
+            mdt_list.append(mdt)
+        for mdt in mdt_list:
+          self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
+      except OSError, e:
+        logger.critical("OSError: %s" %e)
     sample = 1
     while sample <= 2:
       try:
