@@ -19,10 +19,11 @@ class lfs_stats:
       self.push_to_graphite = self.push_to_graphite()
     elif self.oss:# If flag for mds is set this means we are gathering OSS Stats.
       self.dictify_oss = self.dictify_oss_stat()
-      self.dictify_brw = self.dictify_brw()
       self.get_oss_delta = self.get_oss_delta()
       self.push_oss_to_graphite = self.push_oss_to_graphite()
-
+      self.dictify_brw = self.dictify_brw()
+      self.push_oss_to_graphite = self.push_oss_to_graphite()
+     
   def argparser(self):
       #Setting up parsing options for inputting data
       parser = argparse.ArgumentParser(description="polling lustre for statistics to pump into graphite host")
@@ -195,24 +196,74 @@ class lfs_stats:
         
   def dictify_brw(self):
     brw = {}
-    brw_in = brw_cmd.split(" ")
-    print brw_in
+    heading_list = []
+    size = []
     sample = 1
     while sample <=2:
       try:
-        brw = Popen(brw_in, stdout=PIPE, stderr=PIPE)
+        brw = Popen(brw_cmd,shell=True, stdout=PIPE, stderr=PIPE)
         brw_out, brw_err = brw.communicate()
-        print "out:%s\nin: %s" %s(brw_out, brw_err)
         if not brw_out and not brw_err:
           logger.debug("no output or error for lctl command")
         elif not brw_out:
           logger.debug("no output for lctl command")
         elif brw_err.rstrip():
           logger.critical("lclt command error: %s" %brw_err)
-        print brw_out
+        ost_stats = {}
+        for line in brw_out.splitlines():
+	  if '==>' in line:
+	    heading = line.split("/")[5].split("-")[1]+"_"+line.split("/")[6].strip("<==").strip()
+          if 'read' in line and 'write' in line:
+	    continue
+	  if '4K:' in line:
+            read_key = heading+'_read_4k'
+            write_key = heading+'_write_4k'
+	    ost_stats[read_key] = int(line.split()[1]) 
+            ost_stats[write_key] = -int(line.split()[5])
+          if '8K:' in line:
+            read_key = heading+'_read_8k'
+            write_key = heading+'_write_8k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])
+          if '16K:' in line:
+            read_key = heading+'_read_16k'
+            write_key = heading+'_write_16k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])
+          if '32K:' in line:
+            read_key = heading+'_read_32k'
+            write_key = heading+'_write_32k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])          
+          if '64K:' in line:
+            read_key = heading+'_read_64k'
+            write_key = heading+'_write_64k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])          
+          if '128K:' in line:
+            read_key = heading+'_read_128k'
+            write_key = heading+'_write_128k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])
+          if '512K:' in line:
+            read_key = heading+'_read_512k'
+            write_key = heading+'_write_512k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])
+          if '1M:' in line:
+            read_key = heading+'_read_1M'
+            write_key = heading+'_write_1M'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])            
+        if sample == 2 
+	  self.ost_stats2 = ost_stats
+        else: 
+          self.ost_stats1 = ost_stats
+          time.sleep(self.interval)
         sample += 1
       except OSError, e:
-        logger.critical("OSError: %s" %e)  
+        logger.critical("OSError: %s" %e)
+    '''do delta here'''  
       
   def get_mds_delta(self):
     self.delta_data={}
