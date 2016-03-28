@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-import sys,os,json,argparse,logging,time,socket
+import sys,os,json,argparse,logging,time,socket,threading
 from subprocess import Popen, PIPE
 from types import *
+from threading import Thread
 
 class lfs_stats:
 
@@ -18,10 +19,10 @@ class lfs_stats:
       self.get_mds_delta = self.get_mds_delta()
       self.push_to_graphite = self.push_to_graphite()
     elif self.oss:# If flag for mds is set this means we are gathering OSS Stats.
-      self.dictify_oss = self.dictify_oss_stat()
+      self.dictify_oss = Thread(target = self.dictify_oss_stat()).start()
       self.get_oss_delta = self.get_oss_delta()
-      self.push_oss_to_graphite = self.push_oss_to_graphite()
-      self.dictify_brw = self.dictify_brw()
+      self.dictify_brw = Thread(target = self.dictify_brw()).start()
+      self.get_oss_brw_delta = self.get_oss_brw_delta()
       self.push_oss_to_graphite = self.push_oss_to_graphite()
      
   def argparser(self):
@@ -255,7 +256,7 @@ class lfs_stats:
             write_key = heading+'_write_1M'
             ost_stats[read_key] = int(line.split()[1])
             ost_stats[write_key] = -int(line.split()[5])            
-        if sample == 2 
+        if sample == 2: 
 	  self.ost_stats2 = ost_stats
         else: 
           self.ost_stats1 = ost_stats
@@ -263,7 +264,6 @@ class lfs_stats:
         sample += 1
       except OSError, e:
         logger.critical("OSError: %s" %e)
-    '''do delta here'''  
       
   def get_mds_delta(self):
     self.delta_data={}
@@ -303,6 +303,16 @@ class lfs_stats:
       write_bytes_delta[key] = delta
     self.delta_oss_list = [read_io_delta, write_io_delta, read_bytes_delta, write_bytes_delta]
     logger.debug("Delta list of dicts: %s" %self.delta_oss_list)
+
+  def get_oss_brw_delta(self):
+    self.delta_brw_data={}
+    for latest_metric, latest_value in self.ost_stats2.iteritems():
+      previous_value = self.ost_stats1[latest_metric]
+      logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
+      delta_value = (int(latest_value) - int(previous_value))/self.interval
+      self.delta_brw_data[latest_metric] = delta_value
+      logger.debug("ost_delta_brw_data: %s" %self.delta_brw_data)
+    self.delta_oss_list = [self.delta_brw_data]
 
   def push_to_graphite(self):
     logger.debug("MDS delta data output: \n%s" %self.delta_data)
