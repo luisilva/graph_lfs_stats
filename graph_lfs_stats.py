@@ -4,6 +4,7 @@ import sys,os,json,argparse,logging,time,socket,threading
 from subprocess import Popen, PIPE
 from types import *
 from threading import Thread
+from mercurial import error, lock
 
 class lfs_stats:
 
@@ -246,6 +247,11 @@ class lfs_stats:
             write_key = heading+'_write_128k'
             ost_stats[read_key] = int(line.split()[1])
             ost_stats[write_key] = -int(line.split()[5])
+          if '256K:' in line:
+            read_key = heading+'_read_256k'
+            write_key = heading+'_write_256k'
+            ost_stats[read_key] = int(line.split()[1])
+            ost_stats[write_key] = -int(line.split()[5])
           if '512K:' in line:
             read_key = heading+'_read_512k'
             write_key = heading+'_write_512k'
@@ -275,10 +281,10 @@ class lfs_stats:
       if delta_metric == 'source' or delta_metric == 'snapshot_time':
         continue
       previous_value = jdata1[delta_metric]
-      logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
+      #logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
       delta_value = (int(latest_value) - int(previous_value))/self.interval
       self.delta_data[delta_metric] = delta_value
-      logger.debug("mds_delta_data: %s" %self.delta_data)
+    logger.debug("mds_delta_data: %s" %self.delta_data)
 
   def get_oss_delta(self):
     read_io_delta = {}
@@ -308,10 +314,10 @@ class lfs_stats:
     self.delta_brw_data={}
     for latest_metric, latest_value in self.ost_stats2.iteritems():
       previous_value = self.ost_stats1[latest_metric]
-      logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
+      #logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
       delta_value = (int(latest_value) - int(previous_value))/self.interval
       self.delta_brw_data[latest_metric] = delta_value
-      logger.debug("ost_delta_brw_data: %s" %self.delta_brw_data)
+    logger.debug("ost_delta_brw_data: %s" %self.delta_brw_data)
     self.delta_oss_list = [self.delta_brw_data]
 
   def push_to_graphite(self):
@@ -386,6 +392,8 @@ if __name__ == '__main__':
   LOG_FORMAT = "[%(asctime)s][%(levelname)s] - %(name)s - %(message)s"
   log_location ='/var/log/graphite/'
   logger = logging.getLogger(log_location)
+  if not os.path.exists(log_location):
+    os.makedirs(log_location)
   ## Use these if you use facter in your environment
   facter_json_file_location = '/var/graphite/facts/facts.json'
   facter_json_location = '/var/graphite/facts'
