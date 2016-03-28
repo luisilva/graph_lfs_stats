@@ -4,7 +4,6 @@ import sys,os,json,argparse,logging,time,socket,threading
 from subprocess import Popen, PIPE
 from types import *
 from threading import Thread
-from mercurial import error, lock
 
 class lfs_stats:
 
