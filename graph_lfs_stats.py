@@ -221,47 +221,47 @@ class lfs_stats:
             read_key = heading+'_read_4k'
             write_key = heading+'_write_4k'
 	    ost_stats[read_key] = int(line.split()[1]) 
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '8K:' in line:
             read_key = heading+'_read_8k'
             write_key = heading+'_write_8k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '16K:' in line:
             read_key = heading+'_read_16k'
             write_key = heading+'_write_16k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '32K:' in line:
             read_key = heading+'_read_32k'
             write_key = heading+'_write_32k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])          
+            ost_stats[write_key] = int(line.split()[5])
           if '64K:' in line:
             read_key = heading+'_read_64k'
             write_key = heading+'_write_64k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])          
+            ost_stats[write_key] = int(line.split()[5])
           if '128K:' in line:
             read_key = heading+'_read_128k'
             write_key = heading+'_write_128k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '256K:' in line:
             read_key = heading+'_read_256k'
             write_key = heading+'_write_256k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '512K:' in line:
             read_key = heading+'_read_512k'
             write_key = heading+'_write_512k'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])
+            ost_stats[write_key] = int(line.split()[5])
           if '1M:' in line:
             read_key = heading+'_read_1M'
             write_key = heading+'_write_1M'
             ost_stats[read_key] = int(line.split()[1])
-            ost_stats[write_key] = -int(line.split()[5])            
+            ost_stats[write_key] = int(line.split()[5])
         if sample == 2: 
 	  self.ost_stats2 = ost_stats
         else: 
