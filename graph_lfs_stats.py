@@ -284,8 +284,8 @@ class lfs_stats:
       
   def get_mds_delta(self):
     self.delta_data={}
-    data2 = json.loads(self.data2)
-    data1 = json.loads(self.data1)
+    data2 = self.data2
+    data1 = self.data1
     for latest_metric, latest_value in data2.iteritems():
       delta_metric = str(latest_metric)
       logger.debug("mds_delta_metric: %s" %delta_metric)
