@@ -125,7 +125,7 @@ class lfs_stats:
         cat_cmd = "cat /proc/fs/lustre/mdt/%s/md_stats" %mdt
         cat_cmd = cat_cmd.split()
         cat = Popen(cat_cmd, stdout=PIPE, stderr=PIPE)
-        cat_out, cat_err = cat_cmd.communicate()
+        cat_out, cat_err = cat.communicate()
         if not cat_out and not cat_err:
           logger.debug("nada!")
         elif not cat_out:
