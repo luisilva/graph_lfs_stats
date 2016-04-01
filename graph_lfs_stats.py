@@ -137,6 +137,8 @@ class lfs_stats:
       #read the strcture line at a time and build a dict out of it:
       data = {}
       for metric in cat_out.splitlines():
+        if 'snapshot_time' in metric:
+          continue
         key = str(metric.split()[0])
         value = int(metric.split()[1])
         data[key] = value
