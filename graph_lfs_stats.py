@@ -113,7 +113,7 @@ class lfs_stats:
           if 'MDT' in mdt:
             mdt_list.append(mdt)
             mdt_count +=1
-        if mdt_count = 0:
+        if mdt_count == 0:
           sys.exit()
         for mdt in mdt_list:
           self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
