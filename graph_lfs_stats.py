@@ -102,15 +102,19 @@ class lfs_stats:
         mdt_cmd = Popen(mdt_location, stdout=PIPE, stderr=PIPE)
         mdt_out, mdt_err = mdt_cmd.communicate()
         if not mdt_out and not mdt_err:
-          print "nada!"
+          logger.debug("nada!")
         elif not mdt_out:
-          print "Um not getting any facts"
+          logger.debug("Um not getting any facts")
         elif mdt_err.rstrip():
-          print "Error:<<%s>>" %mdt_err
+          logger.debug("Error:<<%s>>" %mdt_err)
+        mdt_count = 0
         mdt_list = []
         for mdt in mdt_out.split("\n"): 
           if 'MDT' in mdt:
             mdt_list.append(mdt)
+            mdt_count +=1
+        if mdt_count = 0:
+          sys.exit()
         for mdt in mdt_list:
           self.filename = "/proc/fs/lustre/mdt/%s/md_stats" %mdt
       except OSError, e:
@@ -118,27 +122,32 @@ class lfs_stats:
     sample = 1
     while sample <= 2:
       try:
-        f = open(self.filename, 'r')
-      except:
-        sys.stderr.write("failed to open"+self.filename+"\n")
-        sys.exit(-1)
-      data = {'source':f.name}
+        cat_cmd = "cat /proc/fs/lustre/mdt/%s/md_stats" %mdt
+        cat_cmd = cat_cmd.split()
+        cat = Popen(cat_cmd, stdout=PIPE, stderr=PIPE)
+        cat_out, cat_err = cat_cmd.communicate()
+        if not cat_out and not cat_err:
+          logger.debug("nada!")
+        elif not cat_out:
+          logger.debug("Um not getting any facts")
+        elif cat_err.rstrip():
+          logger.debug("Error:<<%s>>" %cat_err)
+      except OSError, e:
+        logger.critical("OSError: %s" %e)
       #read the strcture line at a time and build a dict out of it:
-      for line in f:
-        words = line.split()
-        if(words[-1].isdigit()):
-          data[words[0]] = words[-1]
-        else:
-          data[words[0]] = words[1]
-      f.close()
+      data = {}
+      for metric in cat_out.splitlines():
+        key = str(metric.split()[0])
+        value = int(metric.split()[1])
+        data[key] = value
       if sample == 1:
-        self.jdata1 = json.JSONEncoder().encode(data)
+        self.data1 = data
       elif sample == 2:
-        self.jdata2 = json.JSONEncoder().encode(data)
+        self.data2 = data
       sample += 1
       time.sleep(self.interval)
-    logger.debug("first data poll: %s" %self.jdata1)
-    logger.debug("Second data poll: %s" %self.jdata2)
+    logger.debug("first data poll: %s" %self.data1)
+    logger.debug("Second data poll: %s" %self.data2)
 
   def dictify_oss_stat(self):
     lctl_cmd = self.filename.split(" ")
@@ -273,14 +282,14 @@ class lfs_stats:
       
   def get_mds_delta(self):
     self.delta_data={}
-    jdata2 = json.loads(self.jdata2)
-    jdata1 = json.loads(self.jdata1)
-    for latest_metric, latest_value in jdata2.iteritems():
+    data2 = json.loads(self.data2)
+    data1 = json.loads(self.data1)
+    for latest_metric, latest_value in data2.iteritems():
       delta_metric = str(latest_metric)
       logger.debug("mds_delta_metric: %s" %delta_metric)
       if delta_metric == 'source' or delta_metric == 'snapshot_time':
         continue
-      previous_value = jdata1[delta_metric]
+      previous_value = data1[delta_metric]
       #logger.debug("%s - %s / %s "  %(int(latest_value), int(previous_value), self.interval))
       delta_value = (int(latest_value) - int(previous_value))/self.interval
       self.delta_data[delta_metric] = delta_value
@@ -326,7 +335,7 @@ class lfs_stats:
   def push_to_graphite(self):
     logger.debug("MDS delta data output: \n%s" %self.delta_data)
     metrics = self.delta_data
-    #metrics = json.loads(self.jdata)
+    #metrics = json.loads(self.data)
     content = []
     for metric, value in metrics.iteritems():
       logger.debug("mds value and metrics: %s : %s" %(metric, value))
