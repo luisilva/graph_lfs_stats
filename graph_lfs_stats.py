@@ -350,10 +350,9 @@ class lfs_stats:
       params = (graphite_service_name, self.datacenter, self.hostname, metric)
       gurl = dots.join(params)
       logger.debug("parameter strick getting sent to graphite: %s" %gurl)
-      data_str = '%s %s %s' %(gurl, value, self.epoch_time)
+      data_str = '%s %s %s\n' %(gurl, value, self.epoch_time)
       content.append(data_str)
-    
-    content = "\n ".join(content)
+    content = "".join(content)
     logger.debug("<<< Opening Connection >>>")
     logger.debug("Pushing data: \n %s" %content)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -376,14 +375,14 @@ class lfs_stats:
       for metric, value in dicts.iteritems():
         params = (graphite_service_name, self.datacenter, self.hostname, metric)
         gurl = dots.join(params)
-        data = '%s %s %s' %(gurl, value, self.epoch_time) 
+        data = '%s %s %s\n' %(gurl, value, self.epoch_time) 
         #print data
         if type(data) is UnicodeType:
           #print type(data)
           data = str(data)
           #print data
         content.append(data)  
-    content = "\n ".join(content)
+    content = "".join(content)
     logger.debug("<<< Opening Connection >>>")
     logger.debug("Pushing data: \n %s" %content)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
